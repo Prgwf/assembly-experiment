@@ -4,6 +4,7 @@ data_seg segment
   len1  db  ?
   len2  db  ?
   cont dw  ?
+  str_debug  db 'run here!!!!', 13, 10, '$'
 data_seg ends
 
 code_seg segment
@@ -59,30 +60,47 @@ start:
   ; mov  ah, 0
   ; call  print_dec
 
-  mov  ch, 0
+  mov  cx, 0000h
   mov  cont, 0
   lea  bx, str1 + 1
   cld
 
 _find_:
-; 搞一个临时的缓存池，取len2长的一段出来，再用repz?
-
-_up_:
-  inc  cont
-  jmp  _find_
+  inc  bx
+  cmp  byte ptr[bx], '$'
+  jz  _out_
+  mov  ch, 00h
+  mov  cl, len2
+  mov  si, bx
+  lea  di, str2 + 2
+  call  check
 
 _out_:
-  mov  ax, cont
   call  print_dec
   mov  ax, 4c00h
   int  21h
 main endp
 
+check proc near
+_loop_:
+  cmp di, '$'
+  jnz  _comp_
+_count_:
+  inc  cont
+  ret
+_comp_:
+  cmp  si, di
+  jnz  _find_
+  jmp  _loop_
+check endp
+
 print_dec proc near
 ;
+  push  ax
   push  bx
   push  dx
 ;
+  mov  ax, cont
   mov  bl, 10
   mov  bh, 0
   div  bl
@@ -104,17 +122,26 @@ lt_10:
 ;
   pop  dx
   pop  bx
+  pop  ax
 ;
   ret
 print_dec endp
 
 crlf proc near
+;
+  push  ax
+  push  dx
+;
   mov  ah, 02h
   mov  dl, 13
   int  21h
   mov  ah, 02h
   mov  dl, 10
   int  21h
+;
+  pop  dx
+  pop  ax
+;
   ret
 crlf endp
 

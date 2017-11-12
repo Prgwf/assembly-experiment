@@ -1,60 +1,83 @@
 data_seg segment
-    mess1   db 'input two numbers!',13,10,'$'
-    one     db '1$'
-    crlf    db 13,10,'$'
+  str1  db 'input a number: ', '$'
 data_seg ends
 
 code_seg segment
-  assume cs:code_seg, ds:data_seg
-
-
+main proc far
+  assume  cs: code_seg, ds:data_seg
 start:
-  mov   ax, data_seg
-  mov   ds, ax
+  push  ds
+  sub  ax, ax
+  push  ax
 
-  lea   dx, mess1
-  mov   ah, 09
-  int   21h
-  mov   ah, 01
-  int   21h
-  lea   dx, crlf
-  mov   ah, 09
-  int   21h
-  sub   al, 30h
-  mov   bl, al
-  mov   ah, 01
-  int   21h
-  lea   dx, crlf
-  mov   ah, 09
-  int   21h
-  sub   al, 30h
-  add   al, bl
-  cmp   al, 0ah
-  jns   yes
-  add   al, 30h
-  mov   dl, al
-  mov   ah, 02
-  int   21h
-  lea   dx, crlf
-  mov   ah, 09
-  int   21h
-  mov   ax, 4c00h
-  int   21h
-yes:
-  lea   dx, one
-  mov   ah, 09
-  int   21h
-  sub   al, 0ah
-  add   al, 30h
-  mov   dl, al
-  mov   ah, 02
-  int   21h
+  mov  ax,  data_seg
+  mov ds, ax
 
-  lea   dx, crlf
-  mov   ah, 09
-  int   21h
+  lea  dx, str1
+  mov  ah, 09h
+  int  21h
+  mov  ah, 01h
+  int  21h
+  call  crlf
+  sub  al, 30h
+  mov  bl, al
 
-  mov   ax, 4c00h
-  int   21h
+  lea  dx, str1
+  mov  ah, 09h
+  int  21h
+  mov  ah, 01h
+  int  21h
+  call  crlf
+  sub  al, 30h
+  mov  ah, 00h
+  add  al, bl
+
+  call  print_dec
+  ret
+main endp
+
+print_dec proc near
+;
+  push  bx
+  push  dx
+;
+  mov  bl, 10
+  mov  bh, 0
+  div  bl
+  push  ax
+  mov  dl, al
+  cmp  dl, 0
+  jz  lt_10
+  add  dl, 30h
+  mov  ah, 02h
+  int  21h
+lt_10:
+  pop  ax
+  mov  dl, ah
+  add  dl, 30h
+  mov  ah, 02h
+  int  21h
+
+  call  crlf
+;
+  pop  dx
+  pop  bx
+;
+  ret
+print_dec endp
+
+crlf proc near
+  push  ax
+  push  dx
+  mov  ah, 02h
+  mov  dl, 13
+  int  21h
+  mov  ah, 02h
+  mov  dl, 10
+  int  21h
+  pop  dx
+  pop  ax
+  ret
+crlf endp
 code_seg ends
 end start
