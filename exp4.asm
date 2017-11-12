@@ -1,6 +1,7 @@
 data_seg segment
   str1  db  128, 0, 128 dup(?)
   str2  db  16, 0, 16 dup(?)
+  str3  db  16, 0, 16 dup(?)
   len1  db  ?
   len2  db  ?
   cont dw  ?
@@ -63,36 +64,32 @@ start:
   mov  cx, 0000h
   mov  cont, 0
   lea  bx, str1 + 1
-  cld
 
 _find_:
   inc  bx
-  cmp  byte ptr[bx], '$'
-  jz  _out_
-  mov  ch, 00h
-  mov  cl, len2
+  cmp  byte ptr [bx], '$' ; 这里细节处理懒得去搞了
+  jl  _out_
+; 取长度len2的一段出来放入一个buffer
+  lea  di, str3 + 2
   mov  si, bx
-  lea  di, str2 + 2
-  call  check
+  mov  cl, len2
+  cld
+  rep  movsb
+; 比较取出来的段和str2串
+  lea  si, str2 + 2
+  lea  di, str3 + 2
+  mov  cl, len2
+  cld
+  repz  cmpsb
+  jnz  _find_
+  inc  cont
+  jmp  _find_
 
 _out_:
   call  print_dec
   mov  ax, 4c00h
   int  21h
 main endp
-
-check proc near
-_loop_:
-  cmp di, '$'
-  jnz  _comp_
-_count_:
-  inc  cont
-  ret
-_comp_:
-  cmp  si, di
-  jnz  _find_
-  jmp  _loop_
-check endp
 
 print_dec proc near
 ;
